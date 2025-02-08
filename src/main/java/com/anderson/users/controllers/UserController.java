@@ -1,13 +1,10 @@
 package com.anderson.users.controllers;
 
 import com.anderson.users.models.User;
+import com.anderson.users.response.UserResponse;
 import com.anderson.users.services.interfaces.IUserService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
@@ -25,7 +22,7 @@ public class UserController {
      * @return a list of User objects representing all users
      */
     @GetMapping("/users")
-    public List<User> findAllUsers() {
+    public ResponseEntity<UserResponse> findAllUsers() {
         return userService.findAllUsers();
     }
 
@@ -36,13 +33,8 @@ public class UserController {
      * @return a ResponseEntity containing the user if found, or a 404 Not Found status if the user does not exist
      */
     @GetMapping("/users/{id}")
-    public ResponseEntity<?> findUserById(@PathVariable Long id) {
-        Optional<User> user = userService.findUserById(id);
-        if (user.isPresent()) {
-            return ResponseEntity.ok(user.get());
-        }
-
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<UserResponse> findUserById(@PathVariable Long id) {
+        return userService.findUserById(id);
     }
 
     /**
@@ -52,8 +44,8 @@ public class UserController {
      * @return a ResponseEntity containing the saved user object and a CREATED HTTP status
      */
     @PostMapping("/users")
-    public ResponseEntity<?> saveUser(@RequestBody User user) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userService.saveUser(user));
+    public ResponseEntity<UserResponse> saveUser(@RequestBody User user) {
+        return userService.saveUser(user);
     }
 
     /**
@@ -62,14 +54,8 @@ public class UserController {
      * @param id the unique identifier of the user to be deleted
      */
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<?> deleteUserById(@PathVariable Long id) {
-        Optional<User> userDB = userService.findUserById(id);
-        if(userDB.isPresent()) {
-            userService.deleteUserById(userDB.get().getId());
-            return ResponseEntity.noContent().build();
-        }
-
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<UserResponse> deleteUserById(@PathVariable Long id) {
+        return userService.deleteUserById(id);
     }
 
     /**
@@ -77,17 +63,8 @@ public class UserController {
      *
      * @param user the user object containing the updated user details
      */
-    @PutMapping("/users")
-    public ResponseEntity<?> updateUser(@RequestBody User user) {
-        Optional<User> userDB = userService.findUserById(user.getId());
-        if(userDB.isPresent()) {
-            User userUpdated = userService.saveUser(user);
-            return ResponseEntity.status(HttpStatus.OK).body(userUpdated);
-        }
-
-        return ResponseEntity.notFound().build();
+    @PutMapping("/users/{id}")
+    public ResponseEntity<UserResponse> updateUser(@RequestBody User user, @PathVariable Long id) {
+        return userService.updateUserById(user, id);
     }
-
-    // ALL THIS BUSINESS LOGIC SHOULD BE IN SERVICE LAYER.
-    // TODO: UPDATE LATER
 }
