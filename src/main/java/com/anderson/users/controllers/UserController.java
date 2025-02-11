@@ -3,14 +3,19 @@ package com.anderson.users.controllers;
 import com.anderson.users.models.User;
 import com.anderson.users.response.UserResponse;
 import com.anderson.users.services.interfaces.IUserService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
 public class UserController {
 
-    private IUserService userService;
+    private final IUserService userService;
 
     public UserController(IUserService userService) {
         this.userService = userService;
@@ -44,7 +49,16 @@ public class UserController {
      * @return a ResponseEntity containing the saved user object and a CREATED HTTP status
      */
     @PostMapping("/users")
-    public ResponseEntity<UserResponse> saveUser(@RequestBody User user) {
+    public ResponseEntity<?> saveUser(@Valid @RequestBody User user, BindingResult result) {
+        // validate the obj passed with "@Valid" and "BindingResult". This last one should be exactly after
+        // the Obj passed (User)
+
+        if(result.hasErrors()) {
+            // abstract this method
+            Map<String, String> errors = new HashMap<>();
+            result.getFieldErrors().forEach(e -> errors.put(e.getField(), e.getDefaultMessage()));
+            return ResponseEntity.badRequest().body(errors);
+        }
         return userService.saveUser(user);
     }
 

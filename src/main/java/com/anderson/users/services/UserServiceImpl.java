@@ -32,7 +32,7 @@ public class UserServiceImpl implements IUserService {
             if(users.isEmpty()) {
                 response.setMetadata("error", "No users found");
             }
-            response.getData().setUsers(users);
+            response.getResponse().setUsers(users);
             response.setMetadata("success", "Users found");
         } catch (Exception e) {
             response.setMetadata("error", "There was an unexpected error");
@@ -53,7 +53,7 @@ public class UserServiceImpl implements IUserService {
             Optional<User> userInDB = userRepository.findById(id);
             if (userInDB.isPresent()) {
                 users.add(userInDB.get());
-                response.getData().setUsers(users);
+                response.getResponse().setUsers(users);
                 response.setMetadata("success", "User found");
             } else {
                 response.setMetadata("error", "The user was not found");
@@ -74,14 +74,9 @@ public class UserServiceImpl implements IUserService {
         List<User> users = new ArrayList<>();
 
         try {
-            if (user.getUserName() == null || user.getPassword() == null) {
-                response.setMetadata("error", "Missing required fields");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-            }
-
             User userSaved = userRepository.save(user);
             users.add(userSaved);
-            response.getData().setUsers(users);
+            response.getResponse().setUsers(users);
             response.setMetadata("success", "User saved");
         } catch (Exception e) {
             response.setMetadata("error", "There was an unexpected error");
@@ -106,7 +101,7 @@ public class UserServiceImpl implements IUserService {
             // check if exist a user identify with the pk
             if(userInDB.isPresent()) {
                 // update user
-                userInDB.get().setUserName(user.getUserName());
+                userInDB.get().setUsername(user.getUsername());
                 userInDB.get().setPassword(user.getPassword());
 
                 // save user updated in DB
@@ -116,7 +111,7 @@ public class UserServiceImpl implements IUserService {
                 list.add(userUpdated);
 
                 // update the response
-                response.getData().setUsers(list);
+                response.getResponse().setUsers(list);
                 response.setMetadata("success", "User updated");
 
             } else {

@@ -23,7 +23,7 @@ public class UsersApplication {
 			for (int i = 0; i < 50; i++) {
 				Faker faker = new Faker();
 				var user = User.builder()
-						.userName(faker.name().username())
+						.username(faker.name().username())
 						.password(faker.internet().password())
 						.email(faker.internet().emailAddress())
 						.build();
