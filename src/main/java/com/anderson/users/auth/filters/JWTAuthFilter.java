@@ -1,5 +1,6 @@
 package com.anderson.users.auth.filters;
 
+import static com.anderson.users.auth.TokenJWTConfig.SECRET;
 import com.anderson.users.models.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
@@ -33,9 +34,9 @@ public class JWTAuthFilter extends UsernamePasswordAuthenticationFilter {
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         // define our data
-        User user = null;
-        String username = null;
-        String password = null;
+        User user;
+        String username;
+        String password;
 
         try {
             // insert the incoming data into var user with ObjectMapper
@@ -43,8 +44,10 @@ public class JWTAuthFilter extends UsernamePasswordAuthenticationFilter {
             username = user.getUsername();
             password = user.getPassword();
 
+            /*
             logger.info("JWTAuthFilter attempting to authenticate user: " + username);
             logger.info("JWTAuthFilter attempting to authenticate password: " + password);
+            */
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -67,7 +70,7 @@ public class JWTAuthFilter extends UsernamePasswordAuthenticationFilter {
         String username = ((org.springframework.security.core.userdetails.User)authResult.getPrincipal()).toString();
 
         // set our secret
-        String originalInput = "thisIstheSecret220011a." + username;
+        String originalInput = SECRET + ":" + username;
 
         // encode to base64
         String token = Base64.getEncoder().encodeToString(originalInput.getBytes());
@@ -80,7 +83,7 @@ public class JWTAuthFilter extends UsernamePasswordAuthenticationFilter {
         // map the data to send to client in JSON format
         body.put("token", token);
         body.put("username", username);
-        body.put("message", String.format("Successfully authenticated user"));
+        body.put("message", "Successfully authenticated user");
 
         // finally send it to client
         response.getWriter().write(new ObjectMapper().writeValueAsString(body));
