@@ -6,6 +6,7 @@ import com.anderson.users.response.UserResponse;
 import com.anderson.users.services.interfaces.IUserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,8 +19,11 @@ public class UserServiceImpl implements IUserService {
 
     private final UserRepository userRepository;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    private final PasswordEncoder passwordEncoder;
+
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -72,6 +76,8 @@ public class UserServiceImpl implements IUserService {
     public ResponseEntity<UserResponse> saveUser(User user) {
         UserResponse response = new UserResponse();
         List<User> users = new ArrayList<>();
+        String passEncrypted = passwordEncoder.encode(user.getPassword());
+        user.setPassword(passEncrypted);
 
         try {
             User userSaved = userRepository.save(user);
