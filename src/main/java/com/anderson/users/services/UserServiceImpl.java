@@ -1,6 +1,10 @@
 package com.anderson.users.services;
 
+import com.anderson.users.dto.UserDto;
+import com.anderson.users.dto.mapper.DtoMapperUser;
+import com.anderson.users.models.Role;
 import com.anderson.users.models.User;
+import com.anderson.users.repositories.RoleRepository;
 import com.anderson.users.repositories.UserRepository;
 import com.anderson.users.response.UserResponse;
 import com.anderson.users.services.interfaces.IUserService;
@@ -13,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements IUserService {
@@ -21,9 +26,12 @@ public class UserServiceImpl implements IUserService {
 
     private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    private final RoleRepository roleRepository;
+
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.roleRepository = roleRepository;
     }
 
     @Override
@@ -36,7 +44,7 @@ public class UserServiceImpl implements IUserService {
             if(users.isEmpty()) {
                 response.setMetadata("error", "No users found");
             }
-            response.getResponse().setUsers(users);
+            response.getResponse().setUsers(users.stream().map(user -> DtoMapperUser.builder().setUser(user).build()).collect(Collectors.toList()));
             response.setMetadata("success", "Users found");
         } catch (Exception e) {
             response.setMetadata("error", "There was an unexpected error");
@@ -51,12 +59,12 @@ public class UserServiceImpl implements IUserService {
     @Transactional(readOnly = true)
     public ResponseEntity<UserResponse> findUserById(Long id) {
         UserResponse response = new UserResponse();
-        List<User> users = new ArrayList<>();
+        List<UserDto> users = new ArrayList<>();
 
         try {
             Optional<User> userInDB = userRepository.findById(id);
             if (userInDB.isPresent()) {
-                users.add(userInDB.get());
+                users.add(DtoMapperUser.builder().setUser(userInDB.get()).build());
                 response.getResponse().setUsers(users);
                 response.setMetadata("success", "User found");
             } else {
@@ -75,13 +83,22 @@ public class UserServiceImpl implements IUserService {
     @Transactional
     public ResponseEntity<UserResponse> saveUser(User user) {
         UserResponse response = new UserResponse();
-        List<User> users = new ArrayList<>();
+        List<UserDto> users = new ArrayList<>();
+        List<Role> roles = new ArrayList<>();
+
         String passEncrypted = passwordEncoder.encode(user.getPassword());
         user.setPassword(passEncrypted);
 
         try {
+            // search available roles
+            Optional<Role> roleDB = roleRepository.findByName("ROLE_USER");
+            if (roleDB.isPresent()) {
+                roles.add(roleDB.orElseThrow());
+            }
+            user.setRoles(roles);
+
             User userSaved = userRepository.save(user);
-            users.add(userSaved);
+            users.add(DtoMapperUser.builder().setUser(userSaved).build());
             response.getResponse().setUsers(users);
             response.setMetadata("success", "User saved");
         } catch (Exception e) {
@@ -98,7 +115,7 @@ public class UserServiceImpl implements IUserService {
     @Transactional
     public ResponseEntity<UserResponse> updateUserById(User user, Long id) {
         UserResponse response = new UserResponse();
-        List<User> list = new ArrayList<>();
+        List<UserDto> list = new ArrayList<>();
 
         try {
             // search the user in DB
@@ -114,7 +131,7 @@ public class UserServiceImpl implements IUserService {
                 User userUpdated = userRepository.save(userInDB.get());
 
                 // add the updated user response (obj) to the response
-                list.add(userUpdated);
+                list.add(DtoMapperUser.builder().setUser(userUpdated).build());
 
                 // update the response
                 response.getResponse().setUsers(list);
@@ -152,6 +169,6 @@ public class UserServiceImpl implements IUserService {
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<UserResponse>(response, HttpStatus.OK);
     }
 }
