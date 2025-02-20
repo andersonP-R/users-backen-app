@@ -1,8 +1,9 @@
 package com.anderson.users.auth.filters;
 
-import static com.anderson.users.auth.TokenJWTConfig.SECRET;
 import com.anderson.users.models.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,12 +12,16 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
-import java.util.Base64;
+import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.anderson.users.auth.TokenJWTConfig.SECRET;
 
 // spring handles everything from behind. When an POST req incomes to our API and the req is requiring "/login" path
 // spring trigger this component and the corresponding method itself.
@@ -69,11 +74,30 @@ public class JWTAuthFilter extends UsernamePasswordAuthenticationFilter {
         // cast result from getPrincipal()
         String username = ((org.springframework.security.core.userdetails.User)authResult.getPrincipal()).toString();
 
-        // set our secret
-        String originalInput = SECRET + ":" + username;
+        // get roles
+        Collection<? extends GrantedAuthority> roles = authResult.getAuthorities();
 
-        // encode to base64
-        String token = Base64.getEncoder().encodeToString(originalInput.getBytes());
+        // check role type
+        boolean isAdmin = roles.stream().anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN"));
+
+        // pass it to payload
+        // Claims claims = Jwts.claims().build(); ***Claims instances are immutable***
+        Map<String, Object> claims = new HashMap<>();
+
+        // save roles (authorities) as json obj
+        claims.put("authorities", new ObjectMapper().writeValueAsString(roles));
+
+        // add role type to claims (jwt payload)
+        claims.put("isAdmin", isAdmin);
+
+        // encode with jwt
+        String token = Jwts.builder()
+                .claims(claims) // pass roles to encrypted jwt
+                .subject(username)
+                .signWith(SECRET)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 3600000))
+                .compact();
 
         // add the token to res headers to retrieve it later
         response.addHeader("Authorization", "Bearer " + token);
