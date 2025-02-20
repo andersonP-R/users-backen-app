@@ -7,12 +7,10 @@ import java.util.HashMap;
 
 @Getter
 public class MetadataResponse {
-    private ArrayList<HashMap<String, String>> metadata = new ArrayList<>();
+    private HashMap<String, String> metadata = new HashMap<>();
 
     public void setMetadata(String status, String message) {
-        HashMap<String, String> map = new HashMap<String, String>();
-        map.put("status", status);
-        map.put("message", message);
-        metadata.add(map);
+        metadata.put("status", status);
+        metadata.put("message", message);
     }
 }
