@@ -7,15 +7,24 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication
 public class UsersApplication {
 
-	public static void main(String[] args) {
+	private final PasswordEncoder passwordEncoder;
+
+    public UsersApplication(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
+
+
+    public static void main(String[] args) {
 		SpringApplication.run(UsersApplication.class, args);
 	}
 
-	// @Bean
+	//@Bean
 	public CommandLineRunner commandLineRunner(
 			UserRepository userRepository
 	) {
@@ -24,7 +33,7 @@ public class UsersApplication {
 				Faker faker = new Faker();
 				var user = User.builder()
 						.username(faker.name().username())
-						.password(faker.internet().password())
+						.password(passwordEncoder.encode(faker.internet().password()))
 						.email(faker.internet().emailAddress())
 						.build();
 				userRepository.save(user);
