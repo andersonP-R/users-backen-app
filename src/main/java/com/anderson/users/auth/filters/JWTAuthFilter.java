@@ -72,7 +72,7 @@ public class JWTAuthFilter extends UsernamePasswordAuthenticationFilter {
         // get data from the user authenticated
 
         // cast result from getPrincipal()
-        String username = ((org.springframework.security.core.userdetails.User)authResult.getPrincipal()).toString();
+        String username = ((org.springframework.security.core.userdetails.User)authResult.getPrincipal()).getUsername();
 
         // get roles
         Collection<? extends GrantedAuthority> roles = authResult.getAuthorities();
@@ -89,6 +89,9 @@ public class JWTAuthFilter extends UsernamePasswordAuthenticationFilter {
 
         // add role type to claims (jwt payload)
         claims.put("isAdmin", isAdmin);
+
+        // add username to payload
+        claims.put("username", username);
 
         // encode with jwt
         String token = Jwts.builder()
